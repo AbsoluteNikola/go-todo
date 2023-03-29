@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"github.com/ichtrojan/thoth"
 	_ "github.com/joho/godotenv/autoload"
 	"log"
@@ -35,9 +35,26 @@ func Database() *sql.DB {
 		log.Fatal("DB_HOST not set in .env")
 	}
 
-	credentials := fmt.Sprintf("%s:%s@(%s:3306)/?charset=utf8&parseTime=True", user, pass, host)
+	port, exist := os.LookupEnv("DB_PORT")
 
-	database, err := sql.Open("mysql", credentials)
+	if !exist {
+		logger.Log(errors.New("DB_PORT not set in .env"))
+		log.Fatal("DB_PORT not set in .env")
+	}
+
+	dbname, exist := os.LookupEnv("DB_NAME")
+
+	if !exist {
+		logger.Log(errors.New("DB_NAMET not set in .env"))
+		log.Fatal("DB_PORT not set in .env")
+	}
+
+	credentials := fmt.Sprintf("sslmode=disable host=%s port=%s user=%s password=%s dbname=%s",
+		host, port, user, pass, dbname)
+
+	fmt.Println(credentials)
+
+	database, err := sql.Open("postgres", credentials)
 
 	if err != nil {
 		logger.Log(err)
@@ -45,27 +62,6 @@ func Database() *sql.DB {
 	} else {
 		fmt.Println("Database Connection Successful")
 	}
-
-	_, err = database.Exec(`CREATE DATABASE gotodo`)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	_, err = database.Exec(`USE gotodo`)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	_, err = database.Exec(`
-		CREATE TABLE todos (
-		    id INT AUTO_INCREMENT,
-		    item TEXT NOT NULL,
-		    completed BOOLEAN DEFAULT FALSE,
-		    PRIMARY KEY (id)
-		);
-	`)
 
 	if err != nil {
 		fmt.Println(err)
