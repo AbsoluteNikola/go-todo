@@ -12,7 +12,7 @@ import (
 var (
 	id        int
 	item      string
-	completed int
+	completed bool
 	view      = template.Must(template.ParseFiles("./views/index.html"))
 	database  = config.Database()
 )
@@ -53,7 +53,7 @@ func Add(w http.ResponseWriter, r *http.Request) {
 
 	item := r.FormValue("item")
 
-	_, err := database.Exec(`INSERT INTO todos (item) VALUE (?)`, item)
+	_, err := database.Exec(`INSERT INTO todos (item) VALUES ($1)`, item)
 
 	if err != nil {
 		fmt.Println(err)
@@ -66,7 +66,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	_, err := database.Exec(`DELETE FROM todos WHERE id = ?`, id)
+	_, err := database.Exec(`DELETE FROM todos WHERE id = $1`, id)
 
 	if err != nil {
 		fmt.Println(err)
@@ -79,7 +79,7 @@ func Complete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	_, err := database.Exec(`UPDATE todos SET completed = 1 WHERE id = ?`, id)
+	_, err := database.Exec(`UPDATE todos SET completed = 'true' WHERE id = $1`, id)
 
 	if err != nil {
 		fmt.Println(err)
